@@ -1,0 +1,16 @@
+{
+  "short_name": "AgriShield",
+  "name": "AgriShield Farmer Safety Monitoring",
+  "icons": [
+    {
+      "src": "/shield.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192 512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0d3824",
+  "theme_color": "#0d3824",
+  "display": "standalone",
+  "orientation": "portrait-primary"
+}
