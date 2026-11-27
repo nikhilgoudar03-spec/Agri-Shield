@@ -180,6 +180,6 @@ def generate_admin_setup_token(
     return {
         "setup_token": raw_token,
         "expires_at": expires_at,
-        "setup_url": f"http://localhost:5173/admin/setup?token={raw_token}",
+        "setup_url": f"/admin/setup?token={raw_token}",
         "message": "One-time administrator setup token created. Valid for one usage."
     }

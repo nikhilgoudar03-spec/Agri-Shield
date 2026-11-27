@@ -3,6 +3,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, JSONResponse
+from pathlib import Path
 from app.config import settings
 from app.database import Base, engine, SessionLocal
 from app.migrations import run_database_migrations
@@ -114,6 +116,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
+    allow_origin_regex=r"https?://.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -135,6 +138,12 @@ app.include_router(emergency.router, prefix=settings.API_V1_STR)
 app.include_router(reports.router, prefix=settings.API_V1_STR)
 app.include_router(websocket.router)
 
+FRONTEND_DIST_DIR = settings.BASE_DIR.parent / "frontend" / "dist"
+
+# Mount frontend assets if compiled
+if (FRONTEND_DIST_DIR / "assets").is_dir():
+    app.mount("/assets", StaticFiles(directory=str(FRONTEND_DIST_DIR / "assets")), name="assets")
+
 @app.get("/api/v1/health", tags=["Health"])
 def health_check():
     return {
@@ -144,11 +153,32 @@ def health_check():
         "system_time": "2026-11-25T15:39:45+05:30"
     }
 
-@app.get("/", tags=["Root"])
-def root_redirect():
+@app.get("/", tags=["Frontend"])
+async def serve_root():
+    index_file = FRONTEND_DIST_DIR / "index.html"
+    if index_file.is_file():
+        return FileResponse(str(index_file))
     return {
         "name": settings.PROJECT_NAME,
         "docs": "/docs",
         "api_v1": settings.API_V1_STR,
         "status": "RUNNING"
     }
+
+@app.get("/{full_path:path}", tags=["Frontend"])
+async def serve_spa_and_static(full_path: str):
+    # Exclude API endpoints, Swagger/OpenAPI docs, and WebSocket paths from SPA fallback
+    if full_path == "api" or full_path.startswith(("api/", "ws/", "docs", "redoc", "openapi.json")):
+        return JSONResponse(status_code=404, content={"detail": f"Route /{full_path} not found"})
+
+    # Check for direct static assets in dist root (e.g. manifest.json, shield.svg, favicon.ico)
+    target_file = FRONTEND_DIST_DIR / full_path
+    if target_file.is_file():
+        return FileResponse(str(target_file))
+
+    # Catch-all: serve index.html for all client-side React routes (/admin, /farmer, /login, etc.)
+    index_file = FRONTEND_DIST_DIR / "index.html"
+    if index_file.is_file():
+        return FileResponse(str(index_file))
+
+    return JSONResponse(status_code=404, content={"detail": "Frontend build not found. Please build frontend first."})

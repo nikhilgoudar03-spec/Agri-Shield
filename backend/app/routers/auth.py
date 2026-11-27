@@ -425,7 +425,7 @@ def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(get_db
     # In local development mode, return development token for immediate testing convenience
     if raw_token_for_dev and settings.DEV_MODE_ALLOW_TEST_AUTH:
         response["dev_reset_token"] = raw_token_for_dev
-        response["dev_reset_url"] = f"http://localhost:5173/reset-password?token={raw_token_for_dev}"
+        response["dev_reset_url"] = f"/reset-password?token={raw_token_for_dev}"
 
     return response
 

@@ -24,6 +24,7 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 #include <WiFiClient.h>
+#include <WiFiClientSecure.h>
 #include <SoftwareSerial.h>
 #include <Wire.h>
 #include <DHT.h>
@@ -38,10 +39,10 @@
 const char* WIFI_SSID     = "YOUR_WIFI_SSID";
 const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
 
-// Laptop 1 FastAPI Backend Server:
-// - Wi-Fi LAN IPv4: http://10.220.195.134:8001
-// - Ethernet LAN IPv4: http://172.16.0.31:8001
-const char* SERVER_BASE_URL = "http://10.220.195.134:8001";
+// Production Single-Domain URL (Cloudflare Public HTTPS Tunnel):
+// - Direct Public HTTPS: https://destination-short-correspondence-rap.trycloudflare.com
+// - Local LAN IPv4 Fallback: http://10.220.195.134:8001
+const char* SERVER_BASE_URL = "https://destination-short-correspondence-rap.trycloudflare.com";
 
 // ============================================================================================
 // 2. REGISTERED DEVICE #3 CREDENTIALS
@@ -109,6 +110,15 @@ void addAgriShieldHeaders(HTTPClient& http) {
   http.addHeader("X-Device-UID", DEVICE_UID);
   http.addHeader("X-Device-API-Key", DEVICE_API_KEY);
   http.addHeader("X-Device-Key", DEVICE_KEY);
+}
+
+void beginHttp(HTTPClient& http, WiFiClient& client, WiFiClientSecure& secureClient, const String& url) {
+  if (url.startsWith("https://")) {
+    secureClient.setInsecure();
+    http.begin(secureClient, url);
+  } else {
+    http.begin(client, url);
+  }
 }
 
 // ============================================================================================
@@ -259,10 +269,11 @@ void sendHeartbeat() {
   if (WiFi.status() != WL_CONNECTED) return;
 
   WiFiClient client;
+  WiFiClientSecure secureClient;
   HTTPClient http;
   String url = String(SERVER_BASE_URL) + "/api/v1/devices/heartbeat";
 
-  http.begin(client, url);
+  beginHttp(http, client, secureClient, url);
   addAgriShieldHeaders(http);
 
   int rssi = WiFi.RSSI();
@@ -331,10 +342,11 @@ void sendTelemetry() {
   }
 
   WiFiClient client;
+  WiFiClientSecure secureClient;
   HTTPClient http;
   String url = String(SERVER_BASE_URL) + "/api/v1/telemetry";
 
-  http.begin(client, url);
+  beginHttp(http, client, secureClient, url);
   addAgriShieldHeaders(http);
 
   String json = "{";
@@ -408,10 +420,11 @@ void sendGpsLocation() {
   }
 
   WiFiClient client;
+  WiFiClientSecure secureClient;
   HTTPClient http;
   String url = String(SERVER_BASE_URL) + "/api/v1/gps";
 
-  http.begin(client, url);
+  beginHttp(http, client, secureClient, url);
   addAgriShieldHeaders(http);
 
   String json = "{";

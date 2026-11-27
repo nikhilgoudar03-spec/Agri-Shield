@@ -85,12 +85,26 @@ Platform: [http://localhost:5173/](http://localhost:5173/)
 
 ---
 
+## 🌐 Single-Domain Production Deployment
+
+AgriShield operates as a unified single-service deployment where FastAPI serves the compiled React Single Page Application (SPA), all REST API routes (`/api/...`), and real-time WebSockets (`/ws/...`) under a single public domain:
+
+- **Public Live Website**: [https://destination-short-correspondence-rap.trycloudflare.com](https://destination-short-correspondence-rap.trycloudflare.com)
+- **Single-Domain Architecture**:
+  - `/*` -> Serves React SPA with client-side HTML5 history fallback (Zero 404 errors on refreshing nested pages such as `/admin`, `/login`, `/farmer/sensors`, `/farmer/gps`)
+  - `/assets/...` -> Compiled production static assets
+  - `/api/v1/...` & `/api/...` -> REST API endpoints
+  - `/ws/telemetry` -> Real-time WebSocket live telemetry & emergency dispatch
+  - Direct HTTPS with SSL/TLS encryption for all client and IoT node traffic
+
+---
+
 ## 📱 Registered Demo Accounts
 
-| Role | Email | Password |
-|---|---|---|
-| **Administrator** | `nikhilgodar03@gmail.com` | `12345678` |
-| **Farmer (Mithun - Device #3)** | `mithunhp3@gmail.com` | `password123` |
+| Role | Email | Password | Access Portal |
+|---|---|---|---|
+| **Administrator** | `nikhilgodar03@gmail.com` | `12345678` | `/admin/login` |
+| **Farmer (Mithun - Device #3)** | `mithunhp3@gmail.com` | `Farmer@123` | `/login` |
 
 ---
 
